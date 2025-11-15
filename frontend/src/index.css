@@ -1,1 +1,60 @@
 @import "tailwindcss";
+
+@theme {
+  --color-gold-50: #fdf7e8;
+  --color-gold-100: #f7eac4;
+  --color-gold-200: #f1dd9f;
+  --color-gold-300: #ebcf7a;
+  --color-gold-400: #e5c356;
+  --color-gold-500: #d9a63a;
+  --color-gold-600: #b7892e;
+  --color-gold-700: #926b23;
+  --color-gold-800: #6e4e17;
+  --color-gold-900: #48320c;
+}
+
+@layer components {
+  .input-style {
+    @apply w-full rounded-lg px-3 py-2.5
+         bg-white text-[15px] text-gray-800
+         border border-gray-300
+         transition-all duration-200 ease-out
+         placeholder:text-gray-400
+         focus:outline-none 
+         focus:ring-2 focus:ring-gold-500 focus:border-transparent;
+  }
+
+  .btn-style {
+     @apply w-full bg-gold-700 text-white font-semibold
+         py-3 rounded-lg tracking-tight
+         transition-all duration-200 ease-out
+         hover:bg-gold-800 hover:shadow-md
+         active:scale-[0.97] active:shadow
+         disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+}
+
+
+@layer components {
+  .auth-card {
+    @apply w-full max-w-md bg-white border border-gray-200 shadow-sm 
+           rounded-xl p-8 md:p-12 relative z-10;
+  }
+
+  .title-auth {
+    @apply text-2xl md:text-3xl font-semibold tracking-tight mb-2;
+  }
+  
+  .subtitle-auth {
+    @apply text-sm md:text-base text-gray-600 leading-relaxed mb-7;
+  }
+
+  .form-section {
+    @apply space-y-5;
+  }
+
+  .bottom-link {
+    @apply text-sm text-gray-600 mt-10 text-center;
+  }
+
+}
