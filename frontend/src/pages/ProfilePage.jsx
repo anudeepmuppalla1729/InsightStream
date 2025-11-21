@@ -39,7 +39,17 @@ const ProfilePage = () => {
 
         {/* Avatar */}
         <div className="flex justify-center mb-6">
-          <div className="w-20 h-20 bg-gray-300 rounded-full"></div>
+          <div className="w-24 h-24 rounded-full overflow-hidden border border-gray-300 shadow-sm">
+            {user.avatar ? (
+              <img
+                src={`/avatars/${user.avatar}`}
+                className="w-full h-full object-cover"
+                alt="avatar"
+              />
+            ) : (
+              <div className="w-full h-full bg-gray-300" />
+            )}
+          </div>
         </div>
 
         {/* User Info */}
@@ -48,21 +58,32 @@ const ProfilePage = () => {
         </h1>
         <p className="text-center text-gray-500 text-sm">{user.email}</p>
 
-        {/* Options */}
+        {/* Buttons */}
         <div className="mt-10 space-y-3">
+
+          {/* Change Avatar */}
+          <button
+            onClick={() => navigate("/profile/avatar")}
+            className="w-full text-left px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-800 font-medium hover:bg-gray-50 transition"
+          >
+            Change Avatar
+          </button>
+
+          {/* Saved Articles */}
           <button
             onClick={() => navigate("/saved")}
-            className="w-full text-left px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-800 font-medium"
+            className="w-full text-left px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-800 font-medium hover:bg-gray-50 transition"
           >
             Saved Articles
           </button>
 
+          {/* Logout */}
           <button
             onClick={() => {
               logout();
               navigate("/login");
             }}
-            className="w-full text-left px-4 py-3 bg-white border border-gray-200 rounded-xl text-red-600 font-medium"
+            className="w-full text-left px-4 py-3 bg-white border border-gray-200 rounded-xl text-red-600 font-medium hover:bg-gray-50 transition"
           >
             Logout
           </button>

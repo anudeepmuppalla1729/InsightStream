@@ -2,7 +2,7 @@ import { create } from "zustand";
 import api from "../api/api";
 import { jwtDecode } from "jwt-decode";
 
-export const useAuthStore = create((set) => ({
+export const useAuthStore = create((set, get) => ({
   user: JSON.parse(localStorage.getItem("user")) || null,
   token: localStorage.getItem("token") || null,
   loading: false,
@@ -22,10 +22,8 @@ export const useAuthStore = create((set) => ({
         return;
       }
 
-      // Restore user object from localStorage if valid
       const savedUser = JSON.parse(localStorage.getItem("user") || "null");
       set({ token, user: savedUser });
-
     } catch (e) {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
@@ -45,8 +43,9 @@ export const useAuthStore = create((set) => ({
 
       const user = {
         id: decoded.id,
-        name,
-        email,
+        name: res.data.name,
+        email: res.data.email,
+        avatar: res.data.avatar,
       };
 
       localStorage.setItem("token", token);
@@ -54,7 +53,6 @@ export const useAuthStore = create((set) => ({
 
       set({ token, user, loading: false });
       return true;
-
     } catch (e) {
       set({ loading: false });
       throw e.response?.data || { message: "Signup failed" };
@@ -72,8 +70,9 @@ export const useAuthStore = create((set) => ({
 
       const user = {
         id: decoded.id,
-        email,
-        name: res.data.name, // backend also returns name
+        name: res.data.name,
+        email: res.data.email,
+        avatar: res.data.avatar,
       };
 
       localStorage.setItem("token", token);
@@ -81,10 +80,34 @@ export const useAuthStore = create((set) => ({
 
       set({ token, user, loading: false });
       return true;
-
     } catch (e) {
       set({ loading: false });
       throw e.response?.data || { message: "Login failed" };
+    }
+  },
+
+  updateAvatar: async (avatar, token) => {
+    const user = get().user;
+    if (!user) return;
+
+    try {
+      const res = await api.patch(
+        `/users/${user.id}/avatar`,
+        { avatar },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      const updatedUser = { ...user, avatar: res.data.avatar };
+
+      set({ user: updatedUser });
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+
+      return true;
+    } catch (err) {
+      console.error("Avatar update error:", err);
+      throw err.response?.data || { message: "Avatar update failed" };
     }
   },
 

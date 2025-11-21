@@ -12,6 +12,7 @@ import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
 import SavedPage from "./pages/SavedPage";
 import ProfilePage from "./pages/ProfilePage";
+import AvatarSelectPage from "./pages/AvatarSelectionPage";
 
 import ArticlePage from "./pages/ArticlePage";
 import ReaderPanel from "./components/ReaderPanel";
@@ -75,6 +76,7 @@ function App() {
         <Route path="/article/:id" element={<ArticlePage />} />
         <Route path="/saved" element={<SavedPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/profile/avatar" element={<AvatarSelectPage />} />
 
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>

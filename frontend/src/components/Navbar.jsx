@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useIsDesktop } from "../hooks/useIsDesktop";
 import { useAuthStore } from "../store/useAuthStore";
+import { LuFolderHeart } from "react-icons/lu";
 
 const Navbar = ({ searchQuery, setSearchQuery }) => {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
@@ -49,61 +50,76 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
         )}
 
         {/* RIGHT SIDE */}
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-4 relative">
           {/* DESKTOP SAVED ICON */}
           {isDesktop && (
             <button
               onClick={goSaved}
               className="text-gray-700 hover:text-gray-900 transition"
             >
-              ★
+              <LuFolderHeart />
             </button>
           )}
 
           {/* PROFILE ICON */}
-          <div
-            className="w-8 h-8 rounded-full bg-gray-300 cursor-pointer"
-            onClick={() => {
-              if (!isDesktop) {
-                navigate("/profile");
-                return;
-              }
+          <div className="relative">
+            <button
+              onClick={() => {
+                if (!user) {
+                  navigate("/login");
+                  return;
+                }
+                setMenuOpen((p) => !p);
+              }}
+              className="w-9 h-9 rounded-full overflow-hidden border border-gray-300"
+            >
+              <img
+                src={
+                  user?.avatar ? `/avatars/${user.avatar}` : "/pfps/pfp1.png"
+                }
+                alt="profile"
+                className="w-full h-full object-cover"
+              />
+            </button>
 
-              if (!user) {
-                navigate("/login");
-                return;
-              }
+            {/* DROPDOWN MENU */}
+            {isDesktop && menuOpen && (
+              <div className="absolute right-0 top-12 bg-white border border-gray-200 shadow-lg rounded-xl py-2 w-44 z-50">
+                <button
+                  className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100"
+                  onClick={() => {
+                    navigate("/saved");
+                    setMenuOpen(false);
+                  }}
+                >
+                  Saved Articles
+                </button>
 
-              setMenuOpen((p) => !p);
-            }}
-          ></div>
+                <button
+                  className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100"
+                  onClick={() => {
+                    navigate("/profile");
+                    setMenuOpen(false);
+                  }}
+                >
+                  Profile
+                </button>
+
+                <button
+                  className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100"
+                  onClick={() => {
+                    logout();
+                    navigate("/login");
+                    setMenuOpen(false);
+                  }}
+                >
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-
-      {/* PROFILE MENU (DESKTOP) */}
-      {isDesktop && menuOpen && user && (
-        <div className="absolute right-4 top-16 bg-white border border-gray-200 shadow-lg rounded-xl py-2 w-40">
-          <button
-            className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100"
-            onClick={() => {
-              navigate("/saved");
-              setMenuOpen(false);
-            }}
-          >
-            Saved Articles
-          </button>
-
-          <button
-            className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100"
-            onClick={() => {
-              logout();
-              navigate("/login");
-            }}
-          >
-            Logout
-          </button>
-        </div>
-      )}
 
       {/* MOBILE SEARCH EXPANDED */}
       {!isDesktop && mobileSearchOpen && (
@@ -128,6 +144,44 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
               transition-all duration-200
             "
           />
+        </div>
+      )}
+
+      {/* MOBILE MENU — SHOW ONLY IF USER CLICKS AVATAR */}
+      {!isDesktop && user && menuOpen && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl p-4 z-50 border-t border-gray-200">
+          <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-3"></div>
+
+          <button
+            className="w-full text-left px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg"
+            onClick={() => {
+              navigate("/saved");
+              setMenuOpen(false);
+            }}
+          >
+            Saved Articles
+          </button>
+
+          <button
+            className="w-full text-left px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg"
+            onClick={() => {
+              navigate("/profile");
+              setMenuOpen(false);
+            }}
+          >
+            Profile
+          </button>
+
+          <button
+            className="w-full text-left px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg"
+            onClick={() => {
+              logout();
+              navigate("/login");
+              setMenuOpen(false);
+            }}
+          >
+            Logout
+          </button>
         </div>
       )}
     </header>
