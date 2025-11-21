@@ -27,22 +27,21 @@ const NewsCard = ({ article, mode = "default", savedData }) => {
   const isSaved = bookmarks.some((b) => b.article.url === article.url);
 
   // ---------------------
-// HANDLE CARD CLICK (robust + deterministic)
-// ---------------------
-const handleClick = () => {
-  const desktopNow = window.matchMedia("(min-width: 1024px)").matches;
+  // HANDLE CARD CLICK (robust + deterministic)
+  // ---------------------
+  const handleClick = () => {
+    const desktopNow = window.matchMedia("(min-width: 1024px)").matches;
 
-  // DESKTOP -> open ReaderPanel (Home + Saved)
-  if (desktopNow) {
-    openReader(article);
-    return;
-  }
+    // DESKTOP -> open ReaderPanel (Home + Saved)
+    if (desktopNow) {
+      openReader(article);
+      return;
+    }
 
-  // MOBILE -> full page. encode the id so slashes in URL don't break route
-  const safeId = encodeURIComponent(article.url);
-  navigate(`/article/${safeId}`, { state: { article } });
-};
-
+    // MOBILE -> full page. encode the id so slashes in URL don't break route
+    const safeId = encodeURIComponent(article.url);
+    navigate(`/article/${safeId}`, { state: { article } });
+  };
 
   // -------------------------------------------------
   // REMOVE (saved mode)
@@ -64,15 +63,18 @@ const handleClick = () => {
   const cardRootClasses = `
     rounded-2xl overflow-hidden bg-white border border-gray-200 
     transition-all duration-300
-    ${mode === "default" ? "hover:shadow-lg hover:-translate-y-1 cursor-pointer" : "cursor-pointer"}
+    ${
+      mode === "default"
+        ? "hover:shadow-lg hover:-translate-y-1 cursor-pointer"
+        : "cursor-pointer"
+    }
     ${isRemoving ? "opacity-0 scale-95" : ""}
   `;
 
   return (
     <div className={cardRootClasses} onClick={handleClick}>
-
       {/* IMAGE */}
-      <div className="aspect-video bg-gray-100 flex items-center justify-center text-gray-400 text-xs">
+      <div className="aspect-video bg-gray-100 flex items-center justify-center text-gray-400 text-xs relative">
         {article.urlToImage ? (
           <img
             src={article.urlToImage}
@@ -82,11 +84,58 @@ const handleClick = () => {
         ) : (
           "No Image"
         )}
+
+        {/* BOOKMARK BUTTON (default mode) - Moved to image overlay */}
+        {mode === "default" && (
+          <button
+            onClick={async (e) => {
+              e.stopPropagation();
+              if (isSaved) {
+                await removeBookmark(article.url, token);
+              } else {
+                await addBookmark(article, token);
+              }
+            }}
+            className="
+              absolute top-3 right-3 
+              text-2xl
+              transition-all duration-200
+              hover:scale-125
+              active:scale-95
+              leading-none
+              drop-shadow-lg
+            "
+            style={{
+              filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.3))",
+              color: isSaved ? "#B7892E" : "#FFFFFF",
+            }}
+          >
+            <span className="block">{isSaved ? "★" : "☆"}</span>
+          </button>
+        )}
+
+        {/* REMOVE BUTTON (saved page) - Moved to image overlay */}
+        {mode === "saved" && (
+          <button
+            onClick={onRemove}
+            className="
+              absolute top-3 right-3 
+              bg-white/90 backdrop-blur-sm shadow-md 
+              w-8 h-8 rounded-full 
+              text-sm text-gray-700 
+              flex items-center justify-center
+              hover:bg-white hover:scale-110
+              transition-all duration-200
+              active:scale-95
+            "
+          >
+            ✕
+          </button>
+        )}
       </div>
 
       {/* CONTENT */}
-      <div className={`p-5 ${mode === "saved" ? "pt-6" : ""} relative`}>
-        
+      <div className={`p-5 ${mode === "saved" ? "pt-6" : ""}`}>
         {/* TITLE */}
         <h3 className="font-medium text-lg md:text-xl text-gray-900 leading-snug tracking-tight line-clamp-3">
           {article.title}
@@ -104,49 +153,6 @@ const handleClick = () => {
           <div className="text-[12px] md:text-[13px] text-gray-500 mt-3">
             Saved · {dayjs(savedData.savedAt).fromNow()}
           </div>
-        )}
-
-        {/* BOOKMARK BUTTON (default mode) */}
-        {mode === "default" && (
-          <button
-            onClick={async (e) => {
-              e.stopPropagation();
-              if (isSaved) {
-                await removeBookmark(article.url, token);
-              } else {
-                await addBookmark(article, token);
-              }
-            }}
-            className="
-              absolute top-4 right-4 
-              bg-white/90 backdrop-blur-sm shadow-md 
-              w-8 h-8 rounded-full text-lg
-              flex items-center justify-center
-              hover:bg-white 
-              transition-all duration-200
-              active:scale-90
-            "
-          >
-            {isSaved ? "★" : "☆"}
-          </button>
-        )}
-
-        {/* REMOVE BUTTON (saved page) */}
-        {mode === "saved" && (
-          <button
-            onClick={onRemove}
-            className="
-              absolute top-4 right-4 
-              bg-white border border-gray-300 
-              w-7 h-7 rounded-full 
-              text-sm text-gray-700 
-              flex items-center justify-center
-              hover:bg-gray-100
-              transition-all duration-200
-            "
-          >
-            ✕
-          </button>
         )}
       </div>
     </div>

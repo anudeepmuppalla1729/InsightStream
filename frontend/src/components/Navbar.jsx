@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useIsDesktop } from "../hooks/useIsDesktop";
 import { useAuthStore } from "../store/useAuthStore";
@@ -19,8 +19,35 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
   const goProfile = () => navigate("/profile");
   const goLogin = () => navigate("/login");
 
+  // Close dropdown when clicking anywhere outside
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    const handleClickOutside = (e) => {
+      // For desktop: Check if click is outside the dropdown menu and profile button
+      if (isDesktop) {
+        if (!e.target.closest(".profile-dropdown-container")) {
+          setMenuOpen(false);
+        }
+      } else {
+        // For mobile: Close if clicking outside the bottom sheet
+        const mobileMenu = document.querySelector(".mobile-bottom-menu");
+        if (
+          mobileMenu &&
+          !mobileMenu.contains(e.target) &&
+          !e.target.closest(".profile-dropdown-container")
+        ) {
+          setMenuOpen(false);
+        }
+      }
+    };
+
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, [menuOpen, isDesktop]);
+
   return (
-    <header className="w-full bg-white border-b border-gold-700 relative">
+    <header className="w-full bg-white border-b border-gold-700 relative z-40">
       <div className="max-w-6xl mx-auto flex items-center justify-between h-16 px-4">
         {/* LEFT — LOGO */}
         <div
@@ -44,7 +71,7 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
                 w-72 px-4 py-2 rounded-full
                 border border-gray-200
                 bg-white
-                focus:ring-2 focus:ring-gold-500 focus:border-gold-500
+                focus:ring-2 focus:ring-gold-500 focus:border-gold-500 focus:outline-none
                 transition-all duration-200
               "
             />
@@ -53,7 +80,6 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
 
         {/* RIGHT SIDE */}
         <div className="flex items-center space-x-4 relative">
-
           {/* MOBILE SEARCH ICON (moves inside right-side container) */}
           {!isDesktop && (
             <button
@@ -75,7 +101,7 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
           )}
 
           {/* PROFILE ICON */}
-          <div className="relative">
+          <div className="relative profile-dropdown-container">
             <button
               onClick={() => {
                 if (!user) {
@@ -101,7 +127,7 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
                 className="
       absolute right-0 top-12 w-40 bg-white border border-gray-200 
       shadow-lg rounded-xl p-2 flex flex-col space-y-1
-      animate-fade-slide
+      animate-fade-slide z-50
     "
               >
                 <button
@@ -156,7 +182,7 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
               placeholder="Search news..."
               className="
           flex-1 px-4 py-2 rounded-full border border-gray-200 
-          focus:ring-2 focus:ring-gold-500 transition
+          focus:ring-2 focus:ring-gold-500 focus:border-gold-500 focus:outline-none transition
         "
             />
           </div>
@@ -165,7 +191,7 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
 
       {/* MOBILE MENU — SHOW ONLY IF USER CLICKS AVATAR */}
       {!isDesktop && user && menuOpen && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl p-4 z-50 border-t border-gray-200">
+        <div className="mobile-bottom-menu fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl p-4 z-50 border-t border-gray-200">
           <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-3"></div>
 
           <button

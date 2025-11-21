@@ -15,7 +15,15 @@ const Home = () => {
   const debouncedSearch = useDebounce(searchQuery, 400);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [showScroll, setShowScroll] = useState(false);
   const loaderRef = useRef(null);
+
+  // Show scroll-to-top button when scrolled down
+  useEffect(() => {
+    const fn = () => setShowScroll(window.scrollY > 300);
+    window.addEventListener("scroll", fn);
+    return () => window.removeEventListener("scroll", fn);
+  }, []);
 
   useEffect(() => {
     closeReader(); // Always close when feed changes
@@ -54,7 +62,7 @@ const Home = () => {
     const observer = new IntersectionObserver(
       (entries) => {
         console.log("Observer checking…", entries[0].isIntersecting);
-        
+
         if (entries[0].isIntersecting && hasMore && !loading) {
           setPage((p) => p + 1);
         }
@@ -102,6 +110,16 @@ const Home = () => {
       />
       <NewsGrid articles={articles} loading={loading} />
       <div ref={loaderRef} className="h-10"></div>
+
+      {/* Scroll to top button */}
+      {showScroll && (
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          className="fixed bottom-6 right-6 bg-gold-700 text-white px-4 py-2 rounded-full shadow-lg hover:bg-gold-800 transition-colors z-50"
+        >
+          ↑ Top
+        </button>
+      )}
     </>
   );
 };

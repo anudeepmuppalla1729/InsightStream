@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "../components/Navbar";
 import { useAuthStore } from "../store/useAuthStore";
 import { useBookmarksStore } from "../store/useBookmarksStore";
@@ -15,6 +16,27 @@ import {
 } from "react-icons/fi";
 
 const DEBOUNCE_MS = 250;
+
+// Animation variants for layout switching
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.05,
+    },
+  },
+  exit: { opacity: 0, transition: { duration: 0.2 } },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.3 },
+  },
+};
 
 const SavedPage = () => {
   const navigate = useNavigate();
@@ -306,62 +328,85 @@ const SavedPage = () => {
             )}
 
             {/* grid */}
-            {!loading && displayed.length > 0 && view === "grid" && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 transition-all">
-                {displayed.map((item) => (
-                  <div
-                    key={item.id || item.article.url}
-                    className="transform hover:-translate-y-1 transition"
-                  >
-                    <NewsCard
-                      article={item.article}
-                      mode="saved"
-                      savedData={item}
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
+            <AnimatePresence mode="wait">
+              {!loading && displayed.length > 0 && view === "grid" && (
+                <motion.div
+                  key="grid-view"
+                  variants={containerVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"
+                >
+                  {displayed.map((item) => (
+                    <motion.div
+                      key={item.id || item.article.url}
+                      variants={itemVariants}
+                      layout
+                    >
+                      <NewsCard
+                        article={item.article}
+                        mode="saved"
+                        savedData={item}
+                      />
+                    </motion.div>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* list */}
-            {!loading && displayed.length > 0 && view === "list" && (
-              <div className="flex flex-col gap-4">
-                {displayed.map((item) => (
-                  <div
-                    key={item.id || item.article.url}
-                    className="flex gap-4 border border-gray-200 rounded-xl p-4 hover:shadow transition cursor-pointer"
-                    onClick={() => handleOpenArticle(item.article)}
-                  >
-                    <div className="w-36 h-24 shrink-0 rounded-lg overflow-hidden bg-gray-100">
-                      {item.article.urlToImage ? (
-                        <img
-                          src={item.article.urlToImage}
-                          className="w-full h-full object-cover"
-                          alt=""
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
-                          No Image
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-lg line-clamp-2 text-gray-900">
-                        {item.article.title}
-                      </h3>
-                      <div className="mt-2 text-xs text-gray-500">
-                        {item.article.source?.name || "Unknown Source"} •{" "}
-                        {new Date(item.savedAt).toLocaleDateString()}
+            <AnimatePresence mode="wait">
+              {!loading && displayed.length > 0 && view === "list" && (
+                <motion.div
+                  key="list-view"
+                  variants={containerVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  className="flex flex-col gap-4"
+                >
+                  {displayed.map((item) => (
+                    <motion.div
+                      key={item.id || item.article.url}
+                      variants={itemVariants}
+                      layout
+                      className="flex gap-4 border border-gray-200 rounded-xl p-4 hover:shadow transition cursor-pointer"
+                      onClick={() => handleOpenArticle(item.article)}
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                    >
+                      <div className="w-36 h-24 shrink-0 rounded-lg overflow-hidden bg-gray-100">
+                        {item.article.urlToImage ? (
+                          <img
+                            src={item.article.urlToImage}
+                            className="w-full h-full object-cover"
+                            alt=""
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
+                            No Image
+                          </div>
+                        )}
                       </div>
-                      <p className="mt-3 text-gray-700 text-sm line-clamp-3">
-                        {item.article.description}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-lg line-clamp-2 text-gray-900">
+                          {item.article.title}
+                        </h3>
+                        <div className="mt-2 text-xs text-gray-500">
+                          {item.article.source?.name || "Unknown Source"} •{" "}
+                          {new Date(item.savedAt).toLocaleDateString()}
+                        </div>
+                        <p className="mt-3 text-gray-700 text-sm line-clamp-3">
+                          {item.article.description}
+                        </p>
+                      </div>
+                    </motion.div>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </section>
 
           {/* scroll to top */}
