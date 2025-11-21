@@ -1,10 +1,12 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useIsDesktop } from "../hooks/useIsDesktop";
 import { useAuthStore } from "../store/useAuthStore";
 import { LuFolderHeart } from "react-icons/lu";
 import { IoSearchOutline } from "react-icons/io5";
-import { FiFilter } from "react-icons/fi";
+import { FiFilter, FiUser, FiLogOut } from "react-icons/fi";
+import { HiOutlineBookmark } from "react-icons/hi";
+import { motion, AnimatePresence } from "framer-motion";
 
 const Navbar = ({
   searchQuery,
@@ -14,43 +16,63 @@ const Navbar = ({
 }) => {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const avatarButtonRef = useRef(null);
 
   const isDesktop = useIsDesktop();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
 
-  const goSaved = () => navigate("/saved");
-  const goProfile = () => navigate("/profile");
+  const goSaved = () => {
+    navigate("/saved");
+    setMenuOpen(false);
+  };
+
+  const goProfile = () => {
+    navigate("/profile");
+    setMenuOpen(false);
+  };
+
   const goLogin = () => navigate("/login");
+
+  const handleLogout = () => {
+    logout();
+    setMenuOpen(false);
+    navigate("/login");
+  };
+
+  // Close menu on route change
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname]);
 
   // Close dropdown when clicking anywhere outside
   useEffect(() => {
     if (!menuOpen) return;
 
     const handleClickOutside = (e) => {
-      // For desktop: Check if click is outside the dropdown menu and profile button
-      if (isDesktop) {
-        if (!e.target.closest(".profile-dropdown-container")) {
-          setMenuOpen(false);
-        }
-      } else {
-        // For mobile: Close if clicking outside the bottom sheet
-        const mobileMenu = document.querySelector(".mobile-bottom-menu");
-        if (
-          mobileMenu &&
-          !mobileMenu.contains(e.target) &&
-          !e.target.closest(".profile-dropdown-container")
-        ) {
-          setMenuOpen(false);
-        }
+      if (!e.target.closest(".profile-dropdown-container")) {
+        setMenuOpen(false);
       }
     };
 
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
-  }, [menuOpen, isDesktop]);
+    const handleEscape = (e) => {
+      if (e.key === "Escape") {
+        setMenuOpen(false);
+        avatarButtonRef.current?.focus();
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [menuOpen]);
 
   return (
     <header className="w-full bg-white border-b border-gold-700 relative z-40">
@@ -118,6 +140,7 @@ const Navbar = ({
           {/* PROFILE ICON */}
           <div className="relative profile-dropdown-container">
             <button
+              ref={avatarButtonRef}
               onClick={() => {
                 if (!user) {
                   navigate("/login");
@@ -125,7 +148,10 @@ const Navbar = ({
                 }
                 setMenuOpen((p) => !p);
               }}
-              className="w-9 h-9 rounded-full overflow-hidden border border-gray-300"
+              className="w-9 h-9 rounded-full overflow-hidden border border-gray-300 hover:ring-1 hover:ring-gold-500/30 transition-all focus:outline-none focus:ring-2 focus:ring-gold-500/40"
+              aria-expanded={menuOpen}
+              aria-haspopup="menu"
+              aria-controls="profile-menu"
             >
               <img
                 src={
@@ -136,37 +162,110 @@ const Navbar = ({
               />
             </button>
 
-            {/* DROPDOWN MENU */}
-            {isDesktop && menuOpen && (
-              <div
-                className="
-      absolute right-0 top-12 w-40 bg-white border border-gray-200 
-      shadow-lg rounded-xl p-2 flex flex-col space-y-1
-      animate-fade-slide z-50
-    "
-              >
-                <button
-                  onClick={goProfile}
-                  className="text-left px-3 py-2 rounded-md hover:bg-gray-100"
+            {/* DESKTOP DROPDOWN MENU */}
+            <AnimatePresence>
+              {isDesktop && menuOpen && user && (
+                <motion.div
+                  id="profile-menu"
+                  role="menu"
+                  initial={{ opacity: 0, translateY: -6, scale: 0.99 }}
+                  animate={{ opacity: 1, translateY: 0, scale: 1 }}
+                  exit={{ opacity: 0, translateY: -6, scale: 0.99 }}
+                  transition={{
+                    duration: 0.14,
+                    ease: [0.16, 0.84, 0.24, 1],
+                  }}
+                  className="
+                    absolute right-0 mt-1 w-56 bg-white 
+                    border border-gray-100 rounded-2xl shadow-lg 
+                    z-50 p-2
+                  "
+                  style={{
+                    boxShadow: "0 8px 18px rgba(19, 19, 24, 0.06)",
+                  }}
                 >
-                  Profile
-                </button>
+                  {/* Identity Block */}
+                  <div className="flex items-center gap-3 px-3 py-2 mb-1">
+                    <div className="w-9 h-9 rounded-full overflow-hidden ring-1 ring-gold-500/30">
+                      <img
+                        src={
+                          user?.avatar
+                            ? `/avatars/${user.avatar}`
+                            : "/pfps/pfp1.png"
+                        }
+                        alt="profile"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-gray-900 truncate">
+                        {user?.name || "User"}
+                      </div>
+                      <div className="text-xs text-gray-500 truncate">
+                        {user?.email || "email@example.com"}
+                      </div>
+                    </div>
+                  </div>
 
-                <button
-                  onClick={goSaved}
-                  className="text-left px-3 py-2 rounded-md hover:bg-gray-100"
-                >
-                  Saved
-                </button>
+                  {/* Primary Actions */}
+                  <button
+                    role="menuitem"
+                    onClick={goSaved}
+                    className="
+                      w-full flex items-center gap-3 px-3 py-2 rounded-lg 
+                      text-sm font-medium text-gray-800 
+                      hover:bg-gold-50 hover:text-gold-700 
+                      transition-all duration-120
+                      active:scale-[0.995]
+                      focus:outline-none focus:ring-2 focus:ring-gold-500/20
+                      relative group
+                    "
+                  >
+                    <HiOutlineBookmark className="text-lg" />
+                    <span>Saved</span>
+                    <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-gold-500 rounded-r opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </button>
 
-                <button
-                  onClick={() => logout()}
-                  className="text-left px-3 py-2 rounded-md hover:bg-gray-100 text-red-500"
-                >
-                  Logout
-                </button>
-              </div>
-            )}
+                  <button
+                    role="menuitem"
+                    onClick={goProfile}
+                    className="
+                      w-full flex items-center gap-3 px-3 py-2 rounded-lg 
+                      text-sm font-medium text-gray-800 
+                      hover:bg-gold-50 hover:text-gold-700 
+                      transition-all duration-120
+                      active:scale-[0.995]
+                      focus:outline-none focus:ring-2 focus:ring-gold-500/20
+                      relative group
+                    "
+                  >
+                    <FiUser className="text-lg" />
+                    <span>Account</span>
+                    <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-gold-500 rounded-r opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </button>
+
+                  {/* Separator */}
+                  <div className="h-px bg-gray-100 my-2" />
+
+                  {/* Logout */}
+                  <button
+                    role="menuitem"
+                    onClick={handleLogout}
+                    className="
+                      w-full flex items-center gap-3 px-3 py-2 rounded-lg 
+                      text-sm font-medium text-red-600 
+                      hover:bg-red-50 
+                      transition-all duration-120
+                      active:scale-[0.995]
+                      focus:outline-none focus:ring-2 focus:ring-red-500/20
+                    "
+                  >
+                    <FiLogOut className="text-lg" />
+                    <span>Logout</span>
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </div>
@@ -217,43 +316,117 @@ const Navbar = ({
         </div>
       )}
 
-      {/* MOBILE MENU — SHOW ONLY IF USER CLICKS AVATAR */}
-      {!isDesktop && user && menuOpen && (
-        <div className="mobile-bottom-menu fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl p-4 z-50 border-t border-gray-200">
-          <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-3"></div>
+      {/* MOBILE BOTTOM SHEET MENU */}
+      <AnimatePresence>
+        {!isDesktop && user && menuOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+              onClick={() => setMenuOpen(false)}
+            />
 
-          <button
-            className="w-full text-left px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg"
-            onClick={() => {
-              navigate("/saved");
-              setMenuOpen(false);
-            }}
-          >
-            Saved Articles
-          </button>
+            {/* Bottom Sheet */}
+            <motion.div
+              role="dialog"
+              aria-modal="true"
+              aria-label="Account menu"
+              initial={{ translateY: "100%", opacity: 0 }}
+              animate={{ translateY: 0, opacity: 1 }}
+              exit={{ translateY: "100%", opacity: 0 }}
+              transition={{
+                duration: 0.26,
+                ease: [0.16, 0.84, 0.24, 1],
+              }}
+              className="
+                mobile-bottom-menu fixed bottom-0 left-0 right-0 
+                bg-white rounded-t-3xl border-t border-gray-100 shadow-xl 
+                max-h-[70vh] overflow-y-auto z-50 
+                pt-3 pb-safe px-4
+              "
+              style={{
+                boxShadow: "0 8px 18px rgba(19, 19, 24, 0.06)",
+              }}
+            >
+              {/* Handle */}
+              <div className="w-10 h-1.5 bg-gray-300 rounded-full mx-auto mb-3" />
 
-          <button
-            className="w-full text-left px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg"
-            onClick={() => {
-              navigate("/profile");
-              setMenuOpen(false);
-            }}
-          >
-            Profile
-          </button>
+              {/* Identity Block */}
+              <div className="flex items-center gap-4 px-3 py-2 mb-4">
+                <div className="w-12 h-12 rounded-full overflow-hidden ring-1 ring-gold-500/30">
+                  <img
+                    src={
+                      user?.avatar
+                        ? `/avatars/${user.avatar}`
+                        : "/pfps/pfp1.png"
+                    }
+                    alt="profile"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-base font-medium text-gray-900 truncate">
+                    {user?.name || "User"}
+                  </div>
+                  <div className="text-xs text-gray-500 truncate">
+                    {user?.email || "email@example.com"}
+                  </div>
+                </div>
+              </div>
 
-          <button
-            className="w-full text-left px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg"
-            onClick={() => {
-              logout();
-              navigate("/login");
-              setMenuOpen(false);
-            }}
-          >
-            Logout
-          </button>
-        </div>
-      )}
+              {/* Actions List */}
+              <div className="space-y-1">
+                <button
+                  onClick={goSaved}
+                  className="
+                    w-full flex items-center gap-3 px-4 py-3 rounded-lg 
+                    text-base font-medium text-gray-800 
+                    hover:bg-gold-50 active:bg-gold-50 
+                    transition-all active:scale-95
+                  "
+                >
+                  <HiOutlineBookmark className="text-xl" />
+                  <span>Saved</span>
+                </button>
+
+                <button
+                  onClick={goProfile}
+                  className="
+                    w-full flex items-center gap-3 px-4 py-3 rounded-lg 
+                    text-base font-medium text-gray-800 
+                    hover:bg-gold-50 active:bg-gold-50 
+                    transition-all active:scale-95
+                  "
+                >
+                  <FiUser className="text-xl" />
+                  <span>Account</span>
+                </button>
+              </div>
+
+              {/* Separator */}
+              <div className="h-px bg-gray-100 my-3" />
+
+              {/* Logout */}
+              <button
+                onClick={handleLogout}
+                className="
+                  w-full flex items-center gap-3 px-4 py-3 rounded-lg 
+                  text-base font-medium text-red-600 
+                  hover:bg-red-50 active:bg-red-50 
+                  transition-all active:scale-95
+                "
+              >
+                <FiLogOut className="text-xl" />
+                <span>Logout</span>
+              </button>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </header>
   );
 };
