@@ -33,7 +33,7 @@ This application features a comprehensive theme customization system that allows
 
 For detailed documentation on the theme system, see [THEME_SYSTEM.md](./THEME_SYSTEM.md)
 
-## Testing Dark Themes
+## Dark Themes
 
 After recent fixes for dark theme visibility:
 
